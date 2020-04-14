@@ -1,0 +1,14 @@
+version: '2'
+services:
+  api:
+    build: ./node
+    ports:
+     - "8080:80"
+    depends_on:
+     - db
+  db:
+    build: ./mysql
+    volumes:
+      - ./db/mysql_data:/volume/mysql
+    ports:
+      - "33306:3306"

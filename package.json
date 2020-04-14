@@ -1,0 +1,20 @@
+{
+  "name": "onboading2020",
+  "version": "1.0.0",
+  "description": "",
+  "main": "app.js",
+  "scripts": {
+    "start": "node src/app.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/awa1kun/ark-onboarding2020.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/awa1kun/ark-onboarding2020/issues"
+  },
+  "homepage": "https://github.com/awa1kun/ark-onboarding2020#readme"
+}
