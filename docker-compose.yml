@@ -11,6 +11,6 @@ services:
   db:
     build: ./docker/mysql
     volumes:
-      - ./db/mysql_data:/docker/volume/mysql
+      - ./docker/volumes/mysql:/var/lib/mysql
     ports:
       - "33306:3306"

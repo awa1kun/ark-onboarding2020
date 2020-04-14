@@ -1,2 +1,2 @@
-docker/volume/mysql/*
+docker/volumes/mysql/*
 !.gitkeep

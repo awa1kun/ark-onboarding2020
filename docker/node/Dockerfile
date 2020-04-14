@@ -5,4 +5,4 @@ ADD ./src/* ./src
 ADD ./package.json .
 RUN npm install
 EXPOSE 8080
-CMD ["node", "app.js"]
+CMD ["node", "src/app.js"]
