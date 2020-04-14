@@ -16,5 +16,11 @@
   "bugs": {
     "url": "https://github.com/awa1kun/ark-onboarding2020/issues"
   },
-  "homepage": "https://github.com/awa1kun/ark-onboarding2020#readme"
+  "homepage": "https://github.com/awa1kun/ark-onboarding2020#readme",
+  "dependencies": {
+    "koa": "^2.11.0",
+    "koa-bodyparser": "^4.3.0",
+    "koa-router": "^8.0.8",
+    "sequelize": "^5.21.6"
+  }
 }

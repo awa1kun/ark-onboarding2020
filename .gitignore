@@ -1,2 +1,3 @@
 docker/volumes/mysql/*
+node_modules/*
 !.gitkeep
