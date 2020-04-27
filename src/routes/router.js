@@ -14,6 +14,56 @@ router.get('/rpsList',async(ctx)=>{
         ctx.status = e.status || 500;
         ctx.body = e.message;
     }
+});
+
+router.get('/rps',async(ctx)=>{
+    try{
+
+    }
+    catch(e){
+        ctx.status = e.status || 500;
+        ctx.body = e.message;
+    }
+});
+
+router.post('/rps',async(ctx)=>{
+    try{
+
+    }
+    catch(e){
+        ctx.status = e.status || 500;
+        ctx.body = e.message;
+    }
+});
+
+router.delete('/rps',async(ctx)=>{
+    try{
+
+    }
+    catch(e){
+        ctx.status = e.status || 500;
+        ctx.body = e.message;
+    }
+});
+
+router.post('/hand',async(ctx)=>{
+    try{
+
+    }
+    catch(e){
+        ctx.status = e.status || 500;
+        ctx.body = e.message;
+    }
+});
+
+router.post('/initiate',async(ctx)=>{
+    try{
+
+    }
+    catch(e){
+        ctx.status = e.status || 500;
+        ctx.body = e.message;
+    }
 })
 
 export default router;
