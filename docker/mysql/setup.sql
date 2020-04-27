@@ -1,20 +1,19 @@
 /***CREATING ALL TABLES*/
--- CREATE TABLE EMPLOYEE (
---   EmployeeId   INT PRIMARY KEY AUTO_INCREMENT NOT NULL,
---   FirstName    VARCHAR(40)                    NULL,
---   LastName     VARCHAR(40)                    NULL,
---   Phone        VARCHAR(20)                    NULL,
---   Address      VARCHAR(100)                   NULL,
---   City         VARCHAR(30)                    NULL,
---   FullName     VARCHAR(100)                   NULL,
---   Email        VARCHAR(100)                   NULL,
---   Pin          VARCHAR(100)                   NULL,
---   CreationDate DATETIME                       NULL,
---   EmployeeCode VARCHAR(10) UNIQUE             NOT NULL
--- )
+CREATE TABLE rpses (
+    rps_id INT PRIMARY KEY AUTO_INCREMENT NOT NULL,
+    title VARCHAR(100),
+    host_user_id INT NOT NULL,
+    host_user_name VARCHAR(50),
+    status INT DEFAULT 0,
+    round INT DEFAULT 1
+);
 
-
-
-
-
-
+CREATE TABLE users (
+    user_id INT PRIMARY KEY AUTO_INCREMENT NOT NULL,
+    user_name VARCHAR(50),
+    join_rps_id INT NOT NULL,
+    current_round INT,
+    current_hand INT,
+    prev_hand INT,
+    available BOOLEAN DEFAULT TRUE
+);
