@@ -1,7 +1,7 @@
-import * as Sequelize from 'sequelize';
-import { DataTypes } from 'sequelize';
+import sequelize from 'sequelize';
+const { Model,DataTypes } = sequelize
 import db from "../db.js"
-export class Rps extends Sequelize.Model{}
+class Rps extends Model{}
 Rps.init({
 	rps_id: {
 		type: DataTypes.INTEGER,
@@ -34,3 +34,4 @@ Rps.init({
 
 	}
 });
+export default Rps;

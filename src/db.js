@@ -1,10 +1,7 @@
-import { Sequelize } from 'sequelize';
+import  Sequelize  from 'sequelize';
 const options = {
     logging: true,
-    dialect: "postgres",
-    dialectOptions: {
-      ssl: true
-    },
+    dialect: "mysql",
     host: "127.0.0.1",
     pool : {
       maxConnections: 5,

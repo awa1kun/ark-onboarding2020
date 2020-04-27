@@ -1,7 +1,7 @@
-import * as Sequelize from 'sequelize';
-import { DataTypes } from 'sequelize';
+import sequelize from 'sequelize';
+const { Model,DataTypes } = sequelize
 import db from "../db.js"
-export class User extends Sequelize.Model{}
+class User extends Model{}
 User.init({
 	user_id: {
 		type: DataTypes.INTEGER,
@@ -34,11 +34,9 @@ User.init({
     freezeTableName: true,
     timestamps: false,
     modelName: 'users',
-    scopes:{
-
-	}
+    scopes:{}
 });
-IndivItems.belongsTo(Locations,{foreignKey:"location_cd",as:"locations",targetKey:"location_cd"});
 
+export default User;
     
     
