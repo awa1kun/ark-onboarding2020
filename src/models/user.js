@@ -12,7 +12,8 @@ User.init({
         type: DataTypes.STRING
     },
     join_rps_id: {
-        type: DataTypes.INTEGER
+        type: DataTypes.INTEGER,
+        allowNull: true
     },
     current_round: {
         type: DataTypes.INTEGER

@@ -14,9 +14,6 @@ Rps.init({
     host_user_id: {
         type: DataTypes.INTEGER
     },
-    host_user_name: {
-        type: DataTypes.STRING
-    },
     status: {
         type: DataTypes.INTEGER,
         allowNull: true
