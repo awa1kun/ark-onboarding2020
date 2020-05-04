@@ -35,8 +35,7 @@ User.init({
 	sequelize: db,
     freezeTableName: true,
     timestamps: false,
-    modelName: 'users',
-    scopes:{}
+    modelName: 'users'
 });
 
 export default User;

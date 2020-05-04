@@ -4,7 +4,6 @@ import Router from 'koa-router';
 import Rps from '../models/rps.js'
 import User from '../models/user.js'
 Rps.hasMany(User,{ foreignKey:'join_rps_id',sourceKey:'rps_id' })
-//User.belongsTo(Rps,{ foreignKey:'join_rps_id', targetKey:'rps_id' })
 
 import { hand2number }from '../utils/common.js'
 import sequelize from 'sequelize';
@@ -160,7 +159,48 @@ router.delete('/rps',async(ctx)=>{
 
 router.post('/hand',async(ctx)=>{
     try{
-
+        const body = ctx.request.body
+        const params = ctx.request.query
+        if( !params.id || !body.hand ){
+            throw new Error('invalid paramaters.');
+        }
+        let rps = await Rps.findOne({ where:{ rps_id:params.id } });
+        if(!rps){
+            throw new Error('the specified id not exists.');
+        }
+        if( rps.status == 2 ){
+            throw new Error('the specified rps had been already closed.')
+        }
+        
+        let user = null;
+        if( rps.status == 0 && rps.round == 1){
+            // 新規参加
+            if( !body.userName ){
+                throw new Error('invalid paramaters.');
+            }
+            user = new User({
+                user_name: body.userName,
+                join_rps_id: rps.rps_id
+            })
+        }
+        else if(rps.status == 1){
+            // 参加継続
+            if( !body.userId ){
+                throw new Error('invalid paramaters.');
+            }
+            user = await User.findOne({ where:{ user_id: userId } })
+            if( !user || user.join_rps_id != rps.rps_id || !user.available ){
+                throw new Error("you couldn't join specified rps.");
+            }
+        }
+        else {
+            throw new Error('unknown error.');
+        }
+        user.prev_hand = user.current_hand;
+        user.current_hand = hand2number(body.hand);
+        user.current_round =  rps.round;
+        await user.save();
+        ctx.body = { userId: user.user_id };
     }
     catch(e){
         ctx.status = e.status || 500;

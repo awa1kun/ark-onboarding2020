@@ -26,9 +26,6 @@ Rps.init({
 	sequelize: db,
     freezeTableName: true,
     timestamps: false,
-    modelName: 'rpses',
-    scopes:{
-
-	}
+    modelName: 'rpses'
 });
 export default Rps;
