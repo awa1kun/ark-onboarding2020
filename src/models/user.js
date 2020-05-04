@@ -1,6 +1,7 @@
 import sequelize from 'sequelize';
 const { Model,DataTypes } = sequelize
 import db from "../db.js"
+
 class User extends Model{}
 User.init({
 	user_id: {
@@ -39,5 +40,3 @@ User.init({
 });
 
 export default User;
-    
-    

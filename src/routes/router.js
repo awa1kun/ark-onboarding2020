@@ -3,8 +3,11 @@ import Router from 'koa-router';
 // models 
 import Rps from '../models/rps.js'
 import User from '../models/user.js'
+Rps.hasMany(User,{ foreignKey:'join_rps_id',sourceKey:'rps_id' })
+//User.belongsTo(Rps,{ foreignKey:'join_rps_id', targetKey:'rps_id' })
 
 import { hand2number }from '../utils/common.js'
+import sequelize from 'sequelize';
 
 const router = new Router();
 router.get('/',(ctx)=>{
@@ -13,8 +16,38 @@ router.get('/',(ctx)=>{
 
 router.get('/rpsList',async(ctx)=>{
     try{
-        let result = await Rps.findAll();
-        return result;
+        let results = await Rps.findAll({
+            where:{ host_user_id:sequelize.literal('`rpses`.`host_user_id` = `users`.`user_id`') },
+            include:[ { model:User, attributes:[] } ],
+            attributes:[
+                'rps_id',
+                'title',
+                'host_user_id',
+                'users.user_name',
+                'status',
+                'round'
+            ],
+            raw:true
+        });
+        ctx.body = results.map(elem=>{
+            let status = "unknown";
+            if(elem.status==0){
+                status = "open";
+            }
+            else if(elem.status==1){
+                status = "progress";
+            }
+            else if(elem.status==2){
+                stauts = "close";
+            }
+
+            return{
+                rpsId: elem.rps_id,
+                title: elem.title,
+                hostName: elem.user_name,
+                status: status
+            }
+        });
     }
     catch(e){
         ctx.status = e.status || 500;
@@ -63,21 +96,21 @@ router.post('/rps',async(ctx)=>{
 });
 
 router.delete('/rps',async(ctx)=>{
-    //[TODO] rpsIDはURLパラメータにしたい
     try{
         const body = ctx.request.body
-        if(!body.rpsId || !body.userId ){
+        const params = ctx.request.query
+        if(!body.userId || !params.id ){
             throw new Error('invalid paramaters.');
         }
-        let targetRps = await Rps.findOne({where:{ rps_id:body.rpsId }});
+        let targetRps = await Rps.findOne({where:{ rps_id:params.id }});
         if(!targetRps){
-            throw new Error('the specified rpsId not exists.')
+            throw new Error('the specified id not exists.')
         }
         if(targetRps.host_user_id != body.userId){
             throw new Error('userId is wrong')
         }
         await targetRps.destroy();
-        await User.destroy({ where:{ join_rps_id:body.rpsId } })
+        await User.destroy({ where:{ join_rps_id:params.id } })
         ctx.body = { result:true }
     }
     catch(e){
