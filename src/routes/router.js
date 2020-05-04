@@ -57,7 +57,46 @@ router.get('/rpsList',async(ctx)=>{
 
 router.get('/rps',async(ctx)=>{
     try{
-
+        const params = ctx.request.query
+        if( !params.id ){
+            throw new Error('invalid paramaters.');
+        }
+        let results = await Rps.findAll({
+            where:{
+                rps_id:params.id
+            },
+            include:[
+                { model:User, attributes:[] }
+            ],
+            attributes:[
+                'round',
+                'status',
+                'users.user_name',
+                'users.prev_hand',
+                'users.available'
+            ],
+            raw:true
+        });
+        if(!results || results == []){
+            throw new Error('the specified id not exists.');
+        }
+        let winners = [];
+        let losers = [];
+        results.forEach(elem=>{
+            if(elem.available){
+                winners.push({ userName: elem.user_name,lastHand: elem.prev_hand || "" })
+            }
+            else{
+                losers.push({ userName: elem.user_name, lastHand: elem.prev_hand || "" })
+            }
+        })
+        ctx.body = {
+            round: results[0].round,
+            finished: results[0].status == 2,
+            winners: winners,
+            losers: losers
+        }
+        
     }
     catch(e){
         ctx.status = e.status || 500;
