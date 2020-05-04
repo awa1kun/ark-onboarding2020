@@ -13,6 +13,7 @@ router.get('/',(ctx)=>{
     ctx.body = `RPS (Rock Paper Scissors) API ! \nversion: 1.0.0`;
 });
 
+// じゃんけん一覧取得
 router.get('/rpsList',async(ctx)=>{
     try{
         let results = await Rps.findAll({
@@ -28,7 +29,8 @@ router.get('/rpsList',async(ctx)=>{
             ],
             raw:true
         });
-        ctx.body = results.map(elem=>{
+        ctx.body = await Promise.all(results.map(async(elem)=>{
+            // status
             let status = "unknown";
             if(elem.status==0){
                 status = "open";
@@ -39,14 +41,21 @@ router.get('/rpsList',async(ctx)=>{
             else if(elem.status==2){
                 stauts = "close";
             }
+            // count a count
+            const users = await User.findOne({
+                where: { join_rps_id: elem.rps_id },
+                attributes:[[sequelize.literal('count(*)'),'count']],
+                raw: true
+            })
 
             return{
                 rpsId: elem.rps_id,
                 title: elem.title,
                 hostName: elem.user_name,
-                status: status
+                status: status,
+                count: users.count
             }
-        });
+        }));
     }
     catch(e){
         ctx.status = e.status || 500;
@@ -54,6 +63,7 @@ router.get('/rpsList',async(ctx)=>{
     }
 });
 
+// じゃんけん情報取得
 router.get('/rps',async(ctx)=>{
     try{
         const params = ctx.request.query
@@ -103,6 +113,7 @@ router.get('/rps',async(ctx)=>{
     }
 });
 
+// じゃんけん参加
 router.post('/rps',async(ctx)=>{
     try{
         const body = ctx.request.body
@@ -133,6 +144,7 @@ router.post('/rps',async(ctx)=>{
     }
 });
 
+// じゃんけん削除
 router.delete('/rps',async(ctx)=>{
     try{
         const body = ctx.request.body
@@ -157,6 +169,7 @@ router.delete('/rps',async(ctx)=>{
     }
 });
 
+// じゃんけん参加
 router.post('/hand',async(ctx)=>{
     try{
         const body = ctx.request.body
@@ -208,9 +221,25 @@ router.post('/hand',async(ctx)=>{
     }
 });
 
+// じゃんけん開始
 router.post('/initiate',async(ctx)=>{
     try{
-
+        const body = ctx.request.body;
+        const params = ctx.request.query;
+        if(!body.userId || !params.id ){
+            throw new Error('invalid paramaters.');
+        }
+        let rps = await Rps.findOne({ where: { rps_id: params.id } });
+        if( !rps || rps.host_user_id != body.userId ){
+            throw new Error('the specified id not exists or invalid userId.');
+        }
+        let users = await User.findAll({ where: { join_rps_id: rps_id } });
+        if(users.length <= 1 ){
+            throw new Error('need two or more participant.')
+        }
+        // ユーザー更新
+        
+        // じゃんけん更新
     }
     catch(e){
         ctx.status = e.status || 500;
