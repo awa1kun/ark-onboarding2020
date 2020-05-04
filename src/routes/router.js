@@ -39,7 +39,7 @@ router.get('/rpsList',async(ctx)=>{
                 status = "progress";
             }
             else if(elem.status==2){
-                stauts = "close";
+                status = "close";
             }
             // count a count
             const users = await User.findOne({
