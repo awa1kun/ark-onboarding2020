@@ -82,6 +82,7 @@ router.get('/rps',async(ctx)=>{
                 'status',
                 'users.user_name',
                 'users.prev_hand',
+                'users.current_round',
                 'users.available'
             ],
             raw:true
@@ -92,11 +93,12 @@ router.get('/rps',async(ctx)=>{
         let winners = [];
         let losers = [];
         results.forEach(elem=>{
+            const info = { userName: elem.user_name,lastHand: elem.prev_hand || "" , round: elem.current_round };
             if(elem.available){
-                winners.push({ userName: elem.user_name,lastHand: elem.prev_hand || "" })
+                winners.push(info);
             }
             else{
-                losers.push({ userName: elem.user_name, lastHand: elem.prev_hand || "" })
+                losers.push(info);
             }
         })
         ctx.body = {
@@ -113,7 +115,7 @@ router.get('/rps',async(ctx)=>{
     }
 });
 
-// じゃんけん参加
+// じゃんけん作成
 router.post('/rps',async(ctx)=>{
     try{
         const body = ctx.request.body
@@ -121,7 +123,7 @@ router.post('/rps',async(ctx)=>{
             throw new Error('invalid paramaters.');
         }
         // ホストユーザー作成
-        let host = new User({ user_name: body.hostName, current_hand: hand2number(body.hand) })
+        let host = new User({ user_name: body.hostName, current_hand: hand2number(body.hand), current_round:1 })
         await host.save();
         const hostUserId = host.user_id;
         // じゃんけん作成
@@ -209,11 +211,12 @@ router.post('/hand',async(ctx)=>{
         else {
             throw new Error('unknown error.');
         }
-        user.prev_hand = user.current_hand;
         user.current_hand = hand2number(body.hand);
         user.current_round =  rps.round;
         await user.save();
         ctx.body = { userId: user.user_id };
+
+        // [TODO] じゃんけんが継続中で全員の手が決まっている場合は進行させる
     }
     catch(e){
         ctx.status = e.status || 500;
@@ -233,13 +236,44 @@ router.post('/initiate',async(ctx)=>{
         if( !rps || rps.host_user_id != body.userId ){
             throw new Error('the specified id not exists or invalid userId.');
         }
-        let users = await User.findAll({ where: { join_rps_id: rps_id } });
+        if ( rps.status != 0 ){
+            throw new Error('specified rps had been started or closed.')
+        }
+        let users = await User.findAll({ where: { join_rps_id: params.id } });
         if(users.length <= 1 ){
             throw new Error('need two or more participant.')
         }
         // ユーザー更新
-        
+        if(users.length == 2){
+            // ２人の場合簡単
+            let userA = users[0];
+            let userB = users[1];
+            userA.available = (userA.current_hand - userB.current_hand) % 3 == 1 ? false : true;
+            userB.available = (userB.current_hand - userA.current_hand) % 3 == 1 ? false : true;
+        }
+        else{
+            throw new Error('coming soon...');
+        }
+        let countWinner = 0;
+        users.forEach(user=>{
+            user.prev_hand = user.current_hand;
+            user.save();
+            if(user.available){
+                countWinner++;
+            }
+        })
         // じゃんけん更新
+        if(countWinner == 1){
+            rps.status = 2;
+            setTimeout(()=>{
+                //[TODO] じゃんけん削除
+            },1000*60*5);
+        }
+        else{
+            rps.status = 1;
+        }
+        rps.round++;
+        await rps.save();
     }
     catch(e){
         ctx.status = e.status || 500;
