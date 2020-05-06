@@ -1,0 +1,16 @@
+version: '2'
+services:
+  api:
+    build:
+      context: ./
+      dockerfile: ./docker/node/Dockerfile
+    ports:
+     - "8888:8080"
+    depends_on:
+     - db
+  db:
+    build: ./docker/mysql
+    volumes:
+      - ./docker/volumes/mysql:/var/lib/mysql
+    ports:
+      - "33306:3306"

@@ -1,7 +1,7 @@
 FROM mhart/alpine-node:12
 
 WORKDIR /api
-ADD ../src/** .
+ADD ./src ./src
+ADD ./package.json ./
 RUN npm install
-EXPOSE 8080
-CMD ["node", "app.js"]
+CMD ["npm", "run" ,"start"]

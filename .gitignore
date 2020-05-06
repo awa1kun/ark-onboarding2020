@@ -1,2 +1,5 @@
-docker/volume/mysql/*
+.vscode
+docker/volumes/mysql/*
+node_modules/*
+
 !.gitkeep
