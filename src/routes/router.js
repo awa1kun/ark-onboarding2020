@@ -5,7 +5,7 @@ import Rps from '../models/rps.js'
 import User from '../models/user.js'
 Rps.hasMany(User,{ foreignKey:'join_rps_id',sourceKey:'rps_id' })
 
-import { hand2number }from '../utils/common.js'
+import { hand2number,number2hand }from '../utils/common.js'
 import sequelize from 'sequelize';
 
 const router = new Router();
@@ -66,48 +66,11 @@ router.get('/rpsList',async(ctx)=>{
 // じゃんけん情報取得
 router.get('/rps',async(ctx)=>{
     try{
-        const params = ctx.request.query
+        const params = ctx.request.query;
         if( !params.id ){
             throw new Error('invalid paramaters.');
         }
-        let results = await Rps.findAll({
-            where:{
-                rps_id:params.id
-            },
-            include:[
-                { model:User, attributes:[] }
-            ],
-            attributes:[
-                'round',
-                'status',
-                'users.user_name',
-                'users.prev_hand',
-                'users.current_round',
-                'users.available'
-            ],
-            raw:true
-        });
-        if(!results || results == []){
-            throw new Error('the specified id not exists.');
-        }
-        let winners = [];
-        let losers = [];
-        results.forEach(elem=>{
-            const info = { userName: elem.user_name,lastHand: elem.prev_hand || "" , round: elem.current_round };
-            if(elem.available){
-                winners.push(info);
-            }
-            else{
-                losers.push(info);
-            }
-        })
-        ctx.body = {
-            round: results[0].round,
-            finished: results[0].status == 2,
-            winners: winners,
-            losers: losers
-        }
-        
+        ctx.body = await getRps(params.id);
     }
     catch(e){
         ctx.status = e.status || 500;
@@ -195,7 +158,7 @@ router.post('/hand',async(ctx)=>{
             if( !body.userId ){
                 throw new Error('invalid paramaters.');
             }
-            user = await User.findOne({ where:{ user_id: userId } })
+            user = await User.findOne({ where:{ user_id: body.userId } })
             if( !user || user.join_rps_id != rps.rps_id || !user.available ){
                 throw new Error("you couldn't join specified rps.");
             }
@@ -208,7 +171,20 @@ router.post('/hand',async(ctx)=>{
         await user.save();
         ctx.body = { userId: user.user_id };
 
-        // [TODO] じゃんけんが継続中で全員の手が決まっている場合は進行させる
+        if(rps.status == 1){
+            let users = await User.findAll({ where:{ join_rps_id:params.id } });
+            let ready = true;
+            for(let user of users){
+                if(user.current_round != rps.round){
+                    ready = false;
+                    break;
+                }
+            }
+
+            if(ready){
+                determineRps(params.id);
+            }
+        }
     }
     catch(e){
         ctx.status = e.status || 500;
@@ -231,42 +207,8 @@ router.post('/initiate',async(ctx)=>{
         if ( rps.status != 0 ){
             throw new Error('specified rps had been started or closed.')
         }
-        let users = await User.findAll({ where: { join_rps_id: params.id } });
-        if(users.length <= 1 ){
-            throw new Error('need two or more participant.')
-        }
-        // ユーザー更新
-        if(users.length == 2){
-            // ２人の場合簡単
-            let userA = users[0];
-            let userB = users[1];
-            userA.available = (userA.current_hand - userB.current_hand) % 3 == 1 ? false : true;
-            userB.available = (userB.current_hand - userA.current_hand) % 3 == 1 ? false : true;
-        }
-        else{
-            throw new Error('coming soon...');
-        }
-        let countWinner = 0;
-        users.forEach(user=>{
-            user.prev_hand = user.current_hand;
-            user.save();
-            if(user.available){
-                countWinner++;
-            }
-        })
-        // じゃんけん更新
-        if(countWinner == 1){
-            rps.status = 2;
-            // 終了したじゃんけんは５分後に削除
-            setTimeout(()=>{
-                deleteRps(params.id,body.userId);
-            },1000*60*5);
-        }
-        else{
-            rps.status = 1;
-        }
-        rps.round++;
-        await rps.save();
+        await determineRps(params.id);
+        ctx.body = await getRps(params.id);
     }
     catch(e){
         ctx.status = e.status || 500;
@@ -285,6 +227,114 @@ const deleteRps = async(rpsId,hostId)=>{
     }
     await targetRps.destroy();
     await User.destroy({ where:{ join_rps_id:rpsId } })
+}
+const getRps = async(rpsId)=>{
+    let results = await Rps.findAll({
+        where:{
+            rps_id:rpsId
+        },
+        include:[
+            { model:User, attributes:[] }
+        ],
+        attributes:[
+            'round',
+            'status',
+            'users.user_name',
+            'users.prev_hand',
+            'users.current_round',
+            'users.available'
+        ],
+        raw:true
+    });
+    if(!results || results == []){
+        throw new Error('the specified id not exists.');
+    }
+    let winners = [];
+    let losers = [];
+    results.forEach(elem=>{
+        const info = { userName: elem.user_name,lastHand: elem.prev_hand != null ? number2hand(elem.prev_hand) : ""  , round: elem.current_round };
+        if(elem.available){
+            winners.push(info);
+        }
+        else{
+            losers.push(info);
+        }
+    })
+    return {
+        round: results[0].round,
+        finished: results[0].status == 2,
+        winners: winners,
+        losers: losers
+    }
+}
+
+const determineRps = async(id)=>{
+    let rps = await Rps.findOne({ where: { rps_id: id } });
+    let users = await User.findAll({ where: { join_rps_id: id } });
+    if(users.length <= 1 ){
+        throw new Error('need two or more participant.')
+    }
+    // ユーザー更新
+    if(users.length == 2){
+        // ２人の場合簡単
+        let userA = users[0];
+        let userB = users[1];
+        userA.available = (userA.current_hand - userB.current_hand) % 3 == 1 ? false : true;
+        userB.available = (userB.current_hand - userA.current_hand) % 3 == 1 ? false : true;
+    }
+    else{
+        // ３人以上の場合
+        // 手をバイナリ演算用の数値に変換
+        let handsBinarrys = users.map(user=>{
+            if(user.current_hand == 0){
+                return 9
+            }
+            else if(user.current_hand == 1){
+                return 2
+            }
+            else{
+                return 4
+            }
+        });
+        const union = handsBinarrys.reduce((a,b)=>{ return a | b });
+        let discriminant = (union >>> 1) & union
+        if(discriminant == 7 || discriminant == 0){
+            // あいこ
+            users.forEach((user)=>{user.available = true});
+        }
+        else{
+            discriminant = discriminant == 1 ? 9 : discriminant;
+            for(let i=0; i < handsBinarrys.length ; i++){
+                if(handsBinarrys[i] == discriminant){
+                    users[i].available = true;
+                }
+                else{
+                    users[i].available = false;
+                }
+            }
+        }
+    }
+    let countWinner = 0;
+    users.forEach(user=>{
+        user.prev_hand = user.current_hand;
+        user.save();
+        if(user.available){
+            countWinner++;
+        }
+    })
+    // じゃんけん更新
+    if(countWinner == 1){
+        rps.status = 2;
+        // 終了したじゃんけんは５分後に削除
+        setTimeout(()=>{
+            deleteRps(id,body.userId);
+        },1000*60*5);
+    }
+    else{
+        rps.status = 1;
+    }
+    rps.round++;
+    await rps.save();
 }
 
 export default router;
