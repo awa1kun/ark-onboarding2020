@@ -154,15 +154,7 @@ router.delete('/rps',async(ctx)=>{
         if(!body.userId || !params.id ){
             throw new Error('invalid paramaters.');
         }
-        let targetRps = await Rps.findOne({where:{ rps_id:params.id }});
-        if(!targetRps){
-            throw new Error('the specified id not exists.')
-        }
-        if(targetRps.host_user_id != body.userId){
-            throw new Error('userId is wrong')
-        }
-        await targetRps.destroy();
-        await User.destroy({ where:{ join_rps_id:params.id } })
+        await deleteRps(params.id,body.userID);
         ctx.body = { result:true }
     }
     catch(e){
@@ -265,8 +257,9 @@ router.post('/initiate',async(ctx)=>{
         // じゃんけん更新
         if(countWinner == 1){
             rps.status = 2;
+            // 終了したじゃんけんは５分後に削除
             setTimeout(()=>{
-                //[TODO] じゃんけん削除
+                deleteRps(params.id,body.userId);
             },1000*60*5);
         }
         else{
@@ -280,5 +273,18 @@ router.post('/initiate',async(ctx)=>{
         ctx.body = e.message;
     }
 })
+
+const deleteRps = async(rpsId,hostId)=>{
+    
+    let targetRps = await Rps.findOne({where:{ rps_id:rpsId }});
+    if(!targetRps){
+        throw new Error('the specified id not exists.')
+    }
+    if(targetRps.host_user_id != hostId){
+        throw new Error('userId is wrong')
+    }
+    await targetRps.destroy();
+    await User.destroy({ where:{ join_rps_id:rpsId } })
+}
 
 export default router;
