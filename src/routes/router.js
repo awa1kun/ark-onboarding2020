@@ -117,7 +117,7 @@ router.delete('/rps',async(ctx)=>{
         if(!body.userId || !params.id ){
             throw new Error('invalid paramaters.');
         }
-        await deleteRps(params.id,body.userID);
+        await deleteRps(params.id,body.userId);
         ctx.body = { result:true }
     }
     catch(e){
