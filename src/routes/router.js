@@ -5,7 +5,7 @@ import Rps from '../models/rps.js'
 import User from '../models/user.js'
 Rps.hasMany(User,{ foreignKey:'join_rps_id',sourceKey:'rps_id' })
 
-import { hand2number,number2hand }from '../utils/common.js'
+import { hand2number,number2hand,mod }from '../utils/common.js'
 import sequelize from 'sequelize';
 
 const router = new Router();
@@ -279,8 +279,8 @@ const determineRps = async(id)=>{
         // ２人の場合簡単
         let userA = users[0];
         let userB = users[1];
-        userA.available = (userA.current_hand - userB.current_hand) % 3 == 1 ? false : true;
-        userB.available = (userB.current_hand - userA.current_hand) % 3 == 1 ? false : true;
+        userA.available = mod((userA.current_hand - userB.current_hand),3) == 1 ? false : true;
+        userB.available = mod((userB.current_hand - userA.current_hand),3) == 1 ? false : true;
     }
     else{
         // ３人以上の場合
@@ -328,7 +328,7 @@ const determineRps = async(id)=>{
         // 終了したじゃんけんは５分後に削除
         setTimeout(()=>{
             deleteRps(id,body.userId);
-        },1000*60*5);
+        },1000*5);
     }
     else{
         rps.status = 1;
