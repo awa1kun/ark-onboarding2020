@@ -327,8 +327,8 @@ const determineRps = async(id)=>{
         rps.status = 2;
         // 終了したじゃんけんは５分後に削除
         setTimeout(()=>{
-            deleteRps(id,body.userId);
-        },1000*5);
+            deleteRps(rps.rps_id,rps.host_user_id);
+        },1000*60*5);
     }
     else{
         rps.status = 1;
