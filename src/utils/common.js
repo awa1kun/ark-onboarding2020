@@ -25,6 +25,21 @@ export const number2hand = (number) => {
     }
 }
 
+export const status2number = (status) => {
+    if(status == "close"){
+        return 2
+    }
+    else if(status == "progress"){
+        return 1
+    }
+    else if(status == "open"){
+        return 0
+    }
+    else{
+        return -1
+    }
+}
+
 export const mod = (i, j) =>{
     return (i % j) < 0 ? (i % j) + 0 + (j < 0 ? -j : j) : (i % j + 0);
 }

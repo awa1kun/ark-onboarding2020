@@ -5,19 +5,27 @@ import Rps from '../models/rps.js'
 import User from '../models/user.js'
 Rps.hasMany(User,{ foreignKey:'join_rps_id',sourceKey:'rps_id' })
 
-import { hand2number,number2hand,mod }from '../utils/common.js'
+import { hand2number,number2hand,mod,status2number }from '../utils/common.js'
 import sequelize from 'sequelize';
 
 const router = new Router();
 router.get('/',(ctx)=>{
-    ctx.body = `RPS (Rock Paper Scissors) API ! \nversion: 1.0.0`;
+    ctx.body = `RPS (Rock Paper Scissors) API ! \nversion: 1.1.0`;
 });
 
 // じゃんけん一覧取得
 router.get('/rpsList',async(ctx)=>{
     try{
+        const params = ctx.request.query;
+        let where = { host_user_id:sequelize.literal('`rpses`.`host_user_id` = `users`.`user_id`') };
+        if(params.hostName){
+            where['$users.user_name$'] = params.hostName;
+        }
+        if(params.status){
+            where.status = status2number(params.status);
+        }
         let results = await Rps.findAll({
-            where:{ host_user_id:sequelize.literal('`rpses`.`host_user_id` = `users`.`user_id`') },
+            where:where,
             include:[ { model:User, attributes:[] } ],
             attributes:[
                 'rps_id',
