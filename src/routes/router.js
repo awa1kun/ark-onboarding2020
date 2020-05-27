@@ -183,6 +183,9 @@ router.post('/hand',async(ctx)=>{
             let users = await User.findAll({ where:{ join_rps_id:params.id } });
             let ready = true;
             for(let user of users){
+                if(!user.available){
+                    continue;
+                }
                 if(user.current_round != rps.round){
                     ready = false;
                     break;
