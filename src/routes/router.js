@@ -180,12 +180,9 @@ router.post('/hand',async(ctx)=>{
         ctx.body = { userId: user.user_id };
 
         if(rps.status == 1){
-            let users = await User.findAll({ where:{ join_rps_id:params.id } });
+            let users = await User.findAll({ where:{ join_rps_id:params.id,available:true } });
             let ready = true;
             for(let user of users){
-                if(!user.available){
-                    continue;
-                }
                 if(user.current_round != rps.round){
                     ready = false;
                     break;
@@ -281,7 +278,7 @@ const getRps = async(rpsId)=>{
 
 const determineRps = async(id)=>{
     let rps = await Rps.findOne({ where: { rps_id: id } });
-    let users = await User.findAll({ where: { join_rps_id: id } });
+    let users = await User.findAll({ where: { join_rps_id: id,available:true } });
     if(users.length <= 1 ){
         throw new Error('need two or more participant.')
     }
