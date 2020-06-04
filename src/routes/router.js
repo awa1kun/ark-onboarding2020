@@ -53,7 +53,8 @@ router.get('/rpsList',async(ctx)=>{
             const users = await User.findOne({
                 where: { join_rps_id: elem.rps_id },
                 attributes:[[sequelize.literal('count(*)'),'count']],
-                raw: true
+                raw: true,
+                order:['status']
             })
 
             return{
