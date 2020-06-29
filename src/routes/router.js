@@ -102,6 +102,9 @@ router.post('/rps',async(ctx)=>{
             userId: hostUserId
         };
         ctx.body = response;
+        setTimeout(()=>{
+            deleteRps(rpsId,hostUserId);
+        },1000*60*60*6);
     }
     catch(e){
         ctx.status = e.status || 500;
