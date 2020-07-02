@@ -5,19 +5,27 @@ import Rps from '../models/rps.js'
 import User from '../models/user.js'
 Rps.hasMany(User,{ foreignKey:'join_rps_id',sourceKey:'rps_id' })
 
-import { hand2number,number2hand }from '../utils/common.js'
+import { hand2number,number2hand,mod,status2number }from '../utils/common.js'
 import sequelize from 'sequelize';
 
 const router = new Router();
 router.get('/',(ctx)=>{
-    ctx.body = `RPS (Rock Paper Scissors) API ! \nversion: 1.0.0`;
+    ctx.body = `RPS (Rock Paper Scissors) API ! \nversion: 1.1.0`;
 });
 
 // じゃんけん一覧取得
 router.get('/rpsList',async(ctx)=>{
     try{
+        const params = ctx.request.query;
+        let where = { host_user_id:sequelize.literal('`rpses`.`host_user_id` = `users`.`user_id`') };
+        if(params.hostName){
+            where['$users.user_name$'] = params.hostName;
+        }
+        if(params.status){
+            where.status = status2number(params.status);
+        }
         let results = await Rps.findAll({
-            where:{ host_user_id:sequelize.literal('`rpses`.`host_user_id` = `users`.`user_id`') },
+            where:where,
             include:[ { model:User, attributes:[] } ],
             attributes:[
                 'rps_id',
@@ -45,7 +53,8 @@ router.get('/rpsList',async(ctx)=>{
             const users = await User.findOne({
                 where: { join_rps_id: elem.rps_id },
                 attributes:[[sequelize.literal('count(*)'),'count']],
-                raw: true
+                raw: true,
+                order:['status']
             })
 
             return{
@@ -120,7 +129,7 @@ router.delete('/rps',async(ctx)=>{
         if(!body.userId || !params.id ){
             throw new Error('invalid paramaters.');
         }
-        await deleteRps(params.id,body.userID);
+        await deleteRps(params.id,body.userId);
         ctx.body = { result:true }
     }
     catch(e){
@@ -175,7 +184,7 @@ router.post('/hand',async(ctx)=>{
         ctx.body = { userId: user.user_id };
 
         if(rps.status == 1){
-            let users = await User.findAll({ where:{ join_rps_id:params.id } });
+            let users = await User.findAll({ where:{ join_rps_id:params.id,available:true } });
             let ready = true;
             for(let user of users){
                 if(user.current_round != rps.round){
@@ -273,7 +282,7 @@ const getRps = async(rpsId)=>{
 
 const determineRps = async(id)=>{
     let rps = await Rps.findOne({ where: { rps_id: id } });
-    let users = await User.findAll({ where: { join_rps_id: id } });
+    let users = await User.findAll({ where: { join_rps_id: id,available:true } });
     if(users.length <= 1 ){
         throw new Error('need two or more participant.')
     }
@@ -282,8 +291,8 @@ const determineRps = async(id)=>{
         // ２人の場合簡単
         let userA = users[0];
         let userB = users[1];
-        userA.available = (userA.current_hand - userB.current_hand) % 3 == 1 ? false : true;
-        userB.available = (userB.current_hand - userA.current_hand) % 3 == 1 ? false : true;
+        userA.available = mod((userA.current_hand - userB.current_hand),3) == 1 ? false : true;
+        userB.available = mod((userB.current_hand - userA.current_hand),3) == 1 ? false : true;
     }
     else{
         // ３人以上の場合
@@ -330,7 +339,7 @@ const determineRps = async(id)=>{
         rps.status = 2;
         // 終了したじゃんけんは５分後に削除
         setTimeout(()=>{
-            deleteRps(id,body.userId);
+            deleteRps(rps.rps_id,rps.host_user_id);
         },1000*60*5);
     }
     else{
