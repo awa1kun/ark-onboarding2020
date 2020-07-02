@@ -14,3 +14,9 @@ services:
       - ./docker/volumes/mysql:/var/lib/mysql
     ports:
       - "33306:3306"
+  nginx:
+    build: ./docker/nginx
+    volumes:
+      - ./docker/volumes/nginx:/etc/nginx/templates
+    ports:
+      - "80:80"
