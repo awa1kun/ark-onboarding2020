@@ -20,3 +20,4 @@ services:
       - ./docker/volumes/nginx:/etc/nginx/templates
     ports:
       - "80:80"
+      - "222:22"
